@@ -81,6 +81,8 @@ Date 11/30/16
 
 ;----------------------------------------------------------------------
 (defun trans (state side)
+	"(trans state side) - takes the current state and translates
+	it into the proper formate for output"
 	(setf spot 0)
 	(setf lst nil)
 	(dolist (n state)
