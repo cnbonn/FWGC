@@ -1,4 +1,36 @@
+#|
+	**** fwgc.lsp
+	
 
+A farmer with his wolf, goat, and cabbage arrive at the bank of a river. 
+A boat at the river’s edge is only large enough for the farmer and one
+of his possessions. The farmer cannot leave the wolf alone with the goat,
+or the goat alone with the cabbage.
+
+This is a classic Artificial Intelligence (AI) problem. The high-level
+symbolic approach to problem-solving in AI is known as the state space
+approach, and involves graph search. In this approach, successor states
+are generated from the start state. One or more of these successors are 
+selected for exploration in the next iteration, new successors are 
+generated, and eventually a path is  determined from the start state to 
+the goal state in the state space graph. A variety of search strategies 
+have  been  developed  to  explore  the  state  space  in  different  ways. 
+Exhaustive  search strategies eventually explore all possible successor
+states en route to findinga solution path. 
+
+running:  in clisp - (load' fwgc)
+		     (fwgc)
+
+	  cmd      - clisp fwgc.lsp
+
+Author: Charles Bonn
+Class: csc461 Programming Languages
+Date 11/30/16
+
+|#
+
+;----------------------------------------------------------------------
+;global constants
 (defconstant farmer 1)
 (defconstant wolf 2)
 (defconstant goat 3)
@@ -7,36 +39,43 @@
 
 ;----------------------------------------------------------------------
 (defun main()
-	"(main) the main function that runes the program"
+	"(main) the main function that runes the program when run
+         from command prompt"
 	(fwgc)
-
 )
 
 ;----------------------------------------------------------------------
 (defun fwgc ()
-	"(fwgc) runs the fwgc program)"
+	"(fwgc) runs the fwgc program"
 
-	(setf start-state (make-state '("*start state*") 'w 'w 'w 'w))
-	(setf goal-state  (make-state '("problem solved") 'e 'e 'e 'e ))
+	(setf start-state (make-state '("*start state*") 'l 'l 'l 'l))
+	(setf goal-state  (make-state '("problem solved") 'r 'r 'r 'r ))
+	;set start and goal states
 
 	(print-problem (reverse(dfs start-state nil goal-state)))	
 )
 
 ;----------------------------------------------------------------------
 (defun print-problem (state)
-	"(print problem) prints output of the solution"
+	"(print problem) prints output of the solution formatting
+	the data to fit the chart"
+
+	(setf moves -1) ;set moves to -1 for inital move
 
 	(format t "Left Bank       Right Bank       Action~%")
         (format t "---------       ----------       ------~%")
 
 	;go tough list and print states
 	(dolist (n state)
-	    (format t "~15A ~15A ~A~%" (trans (cdr n) 'w) (trans (cdr n) 'e)  (car n))
+	    (format t "~15A ~15A ~A~%" (trans (cdr n) 'l) (trans (cdr n) 'r)  (car n))
+	    (incf moves)
 	)
 	;if a solved problem print soliton
 	(cond
-	    ((equalp state nil) (format t "*** No Solution ***~%"))
-	    (t (format t  "~31A *** problem solved! ***~%" " "))
+	    ((equal state nil) (format t "*** No Solution ***~%"))
+	    (t (format t  "~31A *** problem solved! ***~%" " ")
+	       (format t  "~31A *** ~A moves ***~%" " " moves)
+	    )
 	)
 )
 
@@ -83,97 +122,68 @@
 (defun state-of (state obj)
 	"(state-of state obj) returns the state of the current
 	obj"
+
 	(nth obj state)
 )
 
 ;----------------------------------------------------------------------
-(defun farmer-state (state)
-	"(farmer state) returns the state of the farmer"
-         (nth 1 state)
-)
+(defun message ( choice state )
+	"(message choice) - writes the message for the current
+	move"
 
-;----------------------------------------------------------------------
-(defun wolf-state (state)
-	"(wolf state) returns the state of the wolf"
-	(nth 2 state)
-)
+	(setf msg "farmer " )
+	(setf returns nil)
 
-;----------------------------------------------------------------------
-(defun goat-state (state)
-	"(goat state) returns the state of the goat"
-	(nth 3 state)
-)
+	; if farmer is comming or going
+        (cond
+	    ((equalp (state-of state farmer) 'r) (setf returns t))
+	    (t (setf returns nil))
+        )	 
 
-;----------------------------------------------------------------------
-(defun cabbage-state (state)
-	"(cabbage state) returns the state of the cabbage"
-	(nth 4 state)
-)
-
-;----------------------------------------------------------------------
-(defun pass-list (new curr-list)
-	"(pass-list new curr-list)
-		pushes the new state onto the list to pass recursivly 
-		without affecting the list used on this level"
-	(cons new curr-list)
-)
-
-
-;----------------------------------------------------------------------
-(defun f-f (state)
-	"(f-f state) - farmer takes him self across the river"
-	(valid-state
-	    (make-state
-		'("farmer crosses alone")
-		(switch (farmer-state state))
-		(wolf-state state)
-		(goat-state state)
-		(cabbage-state state)
-	    )
+	; message for comming or going
+        (cond
+	    ((equalp returns t) 
+			(setf msg (concatenate 'string msg "returns ")))
+	    (t (setf msg  (concatenate 'string msg "takes " )))
 	)
-	
-)
 
-;----------------------------------------------------------------------
-(defun f-w (state)
-	"(f-w state) - farmer takes the wolf across the river"
-	(valid-state
-	    (make-state
-		'("farmer takes wolf across")
-		(switch (farmer-state state))
-		(switch (wolf-state state))
-		(goat-state state)
-		(cabbage-state state)
-	    )
+        ;animal choice
+	(cond
+	    ((eq choice farmer)  (setf msg (concatenate 'string msg "alone ")))
+	    ((eq choice wolf)    (setf msg (concatenate 'string msg "wolf ")))
+	    ((eq choice goat)    (setf msg (concatenate 'string msg "goat ")))
+	    ((eq choice cabbage) (setf msg (concatenate 'string msg "cabbage ")))
 	)
-	
-)
 
-;----------------------------------------------------------------------
-(defun f-g (state)
-	"(f-g state) - farmer takes thes goat across the river"
-	(valid-state
-	    (make-state
-		'("farmer takes goat across")
-		(switch (farmer-state state))
-		(wolf-state state)
-		(switch (goat-state state))
-		(cabbage-state state)
-	    )
+	; going across
+	(cond
+	    ((equalp returns t) msg) 
+	    (t (setf msg (concatenate 'string msg "across")))
 	)
-	
 )
 
 ;----------------------------------------------------------------------
-(defun f-c (state)
-	"(f-c state) - farmer takes the cabbage across the river"
+(defun boat (state choice )
+	"(boat state choice) - makes a new state based off of what
+	the farmer is currently taking on the boat"
+
 	(valid-state
 	    (make-state
-		'("farmer takes cabbage across")
-		(switch (farmer-state state))
-		(wolf-state state)
-		(goat-state state)
-		(switch (cabbage-state state))
+		(message choice state)
+		;'("test")
+		(switch (state-of state farmer))
+		(cond
+		    ((eq choice wolf) (switch (state-of state wolf)))
+		    (t (state-of state wolf))
+		)
+		(cond
+		    ((eq choice goat) (switch (state-of state goat)))
+		    (t (state-of state goat))
+		)
+		(cond
+		    ((eq choice cabbage) (switch (state-of state cabbage)))
+		    (t (state-of state cabbage))
+		)
 	    )
 	)
 )
@@ -183,8 +193,8 @@
 	"(switch side) switches the side of the river that FWGC is 
 	currently on"
 	(cond
-	    ((equal side 'w) 'e)
-	    ((equal side 'e) 'w)
+	    ((equalp side 'l) 'r)
+	    ((equalp side 'r) 'l)
 	)
 )
 
@@ -194,28 +204,24 @@
 		does a recursive DFS to find a solution to the 
 		FWGC problem. Returns a solution in reverse order
 		path. "
-	;(format t "state: ~A~%" state)
-	;(format t "state-list ~A~%" state-list)
-	;(format t "goal-state ~A~%" goal-state)
  
 	(cond
 	    ((equalp (valid-state state) nil) nil)
 	    ;invalid state, return nil
 	    ((equalp (cdr state) (cdr goal-state)) (cons state state-list)  )
 	    ; found winning state
-	    ((not (member state state-list :test #'equal))
-		(or (dfs (f-f state) (cons state state-list) goal-state)
-		    (dfs (f-w state) (cons state state-list) goal-state)
-		    (dfs (f-g state) (cons state state-list) goal-state)
-		    (dfs (f-c state) (cons state state-list) goal-state)
-		)
-	    )	    
+	    ((not (member  (cdr state) state-list :test #'equalp :key #'cdr))
+		    (or (dfs (boat state farmer) (cons state state-list) goal-state)
+		        (dfs (boat state wolf) (cons state state-list) goal-state)
+		        (dfs (boat state goat) (cons state state-list) goal-state)
+		        (dfs (boat state cabbage) (cons state state-list) goal-state)
+		    )
+	    )
 	    (t nil)
 	    ;if none of the moves provide a list return null
 	)
 
 )
-
 
 ;-------------------------------------------------
 ;run fgwc upon loading file
